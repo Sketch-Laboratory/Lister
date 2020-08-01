@@ -1,2 +1,4 @@
+include ':Twitter'
+include ':Framework'
 include ':app', ':WebView'
 rootProject.name = "TwitterListViewer"
