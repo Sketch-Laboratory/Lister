@@ -1,6 +1,5 @@
 package com.sasarinomari.dialog
 
-import android.app.Activity
 import android.content.Context
 
 class MaterialDialog(context: Context) : Dialog() {
@@ -43,45 +42,40 @@ class MaterialDialog(context: Context) : Dialog() {
         return this
     }
 }
-
 class MaterialDialogAdapter(private val content: Context) : BaseDialogAdapter() {
-    override fun message(title: String?, content: String, callback: (()->Unit)?): Dialog {
-        val d = MaterialDialog(this.content)
+    private fun initialize(d: Dialog, title: String?, content: String, callback: (() -> Unit)?) {
         if(!title.isNullOrEmpty()) d.setTitle(title)
         d.setContent(content)
         if(callback!=null) d.setPositiveButton { callback() }
+    }
+
+    override fun message(title: String?, content: String, callback: (()->Unit)?): Dialog {
+        val d = MaterialDialog(this.content)
+        initialize(d, title,content,callback)
         return d
     }
 
     override fun error(title: String?, content: String, callback: (()->Unit)?): Dialog {
         val d = MaterialDialog(this.content)
-        if(!title.isNullOrEmpty()) d.setTitle(title)
-        d.setContent(content)
-        if(callback!=null) d.setPositiveButton { callback() }
+        initialize(d, title,content,callback)
         return d
     }
 
     override fun warning(title: String?, content: String, callback: (()->Unit)?): Dialog {
         val d = MaterialDialog(this.content)
-        if(!title.isNullOrEmpty()) d.setTitle(title)
-        d.setContent(content)
-        if(callback!=null) d.setPositiveButton { callback() }
+        initialize(d, title,content,callback)
         return d
     }
 
     override fun progress(title: String?, content: String, callback: (()->Unit)?): Dialog {
         val d = MaterialDialog(this.content)
-        if(!title.isNullOrEmpty()) d.setTitle(title)
-        d.setContent(content)
-        if(callback!=null) d.setPositiveButton { callback() }
+        initialize(d, title,content,callback)
         return d
     }
 
     override fun success(title: String?, content: String, callback: (()->Unit)?): Dialog {
         val d = MaterialDialog(this.content)
-        if(!title.isNullOrEmpty()) d.setTitle(title)
-        d.setContent(content)
-        if(callback!=null) d.setPositiveButton { callback() }
+        initialize(d, title,content,callback)
         return d
     }
 }
