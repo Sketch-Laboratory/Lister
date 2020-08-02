@@ -1,22 +1,16 @@
 package com.sasarinomari.twitter
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import twitter4j.*
-import twitter4j.auth.AccessToken
-
+import com.sasarinomari.twitter.simplizatedClass.User
 
 class TwitterAdapter {
     companion object {
         private const val LOG_TAG: String = "TwitterAdapter"
 
-        fun showProfile(context: Context, screenName: String) {
+        fun openProfile(context: Context, screenName: String) {
             try {
                 context.startActivity(
                     Intent(
@@ -33,8 +27,7 @@ class TwitterAdapter {
                 )
             }
         }
-
-        fun showStatus(context: Context, statusId: Long) {
+        fun openStatus(context: Context, statusId: Long) {
             try {
                 context.startActivity(
                     Intent(
@@ -51,112 +44,13 @@ class TwitterAdapter {
                 )
             }
         }
-
-        @SuppressLint("ObsoleteSdkInt")
-        fun isConnected(context: Context): Boolean {
-            var result = false
-            val connectivityManager =
-                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val networkCapabilities = connectivityManager.activeNetwork ?: return false
-                val actNw =
-                    connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
-                result = when {
-                    actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                    actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                    actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                    else -> false
-                }
-            } else {
-                connectivityManager.run {
-                    connectivityManager.activeNetworkInfo?.run {
-                        result = when (type) {
-                            ConnectivityManager.TYPE_WIFI -> true
-                            ConnectivityManager.TYPE_MOBILE -> true
-                            ConnectivityManager.TYPE_ETHERNET -> true
-                            else -> false
-                        }
-                    }
-                }
-            }
-
-            return result
-        }
     }
-
-    class TwitterInterface {
-        companion object {
-            private lateinit var consumerKey: String
-            private lateinit var consumerSecret: String
-
-            fun setOAuthConsumer(consumerKey: String, consumerSecret: String) {
-                Companion.consumerKey = consumerKey
-                Companion.consumerSecret = consumerSecret
-            }
-        }
-        val id: Long
-            get() { return client.id }
-
-        // TODO: 이 병신같은 초기화 코드 언제 좀 고치셈 ㅡㅡ^
-        lateinit var client: Twitter
-            private set
-
-        fun initialize() {
-            val t = TwitterFactory().instance
-            t.setOAuthConsumer(consumerKey, consumerSecret)
-            this.client = t
-        }
-
-        fun initialize(twitter: Twitter) {
-            this.client = twitter
-        }
-
-        fun initialize(accessToken: AccessToken) {
-            initialize()
-            client.oAuthAccessToken = accessToken
-        }
-    }
-
-    var twitter = TwitterInterface()
-
-    fun initialize(accessToken: AccessToken) : TwitterAdapter {
-        twitter.initialize(accessToken)
-        Log.i(LOG_TAG, "Logged in with ${accessToken.screenName}")
+    
+    var twitter = Twitter()
+    fun initialize(accessToken: twitter4j.auth.AccessToken) : TwitterAdapter {
+        twitter = Twitter(accessToken)
         return this
     }
-
-    // region Interfaces
-    interface BaseInterface {
-        fun onStart()
-    }
-    interface ErrorInterface {
-        fun onUncaughtError()
-        fun onNetworkError(retrySelf: ()->Unit)
-    }
-    interface IterableInterface : BaseInterface, ErrorInterface {
-        fun onFinished()
-        fun onIterate(listIndex: Int)
-        fun onRateLimit(listIndex: Int)
-    }
-    interface FetchListInterface : BaseInterface, ErrorInterface {
-        fun onFinished(list: ArrayList<*>)
-        fun onFetch(listSize: Int)
-        fun onRateLimit(listSize: Int)
-    }
-    interface FetchObjectInterface : BaseInterface, ErrorInterface {
-        fun onFinished(obj: Any)
-        fun onRateLimit()
-    }
-    interface FoundObjectInterface : BaseInterface, ErrorInterface {
-        fun onFinished(obj: Any)
-        fun onRateLimit()
-        fun onNotFound()
-    }
-    interface PostInterface : BaseInterface, ErrorInterface{
-        fun onFinished(obj: Any)
-        fun onRateLimit()
-    }
-    // endregion
 
     fun blockUsers(targetUsersIds: ArrayList<Long>, apiInterface: IterableInterface, startIndex: Int = 0) {
         apiInterface.onStart()
@@ -168,7 +62,7 @@ class TwitterAdapter {
                 twitter.client.createBlock(targetUsersIds[it])
             }
             apiInterface.onFinished()
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "createBlock") {
                 override fun onRateLimitExceeded() {
                     apiInterface.onRateLimit(cursor)
@@ -202,7 +96,7 @@ class TwitterAdapter {
                 else break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getFriendsIDs") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -236,7 +130,7 @@ class TwitterAdapter {
                 else break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getFollowersIDs") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -261,8 +155,8 @@ class TwitterAdapter {
         apiInterface.onStart()
         try {
             val me = twitter.client.showUser(twitter.client.id)
-            apiInterface.onFinished(me)
-        } catch (te: TwitterException) {
+            apiInterface.onFinished(User(me))
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "showUser") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -283,7 +177,7 @@ class TwitterAdapter {
         }
     }
 
-    fun getFriends(targetUserId: Long, apiInterface: FetchListInterface, startIndex: Long = -1, list: ArrayList<User> = ArrayList()) {
+    fun getFriends(targetUserId: Long, apiInterface: FetchListInterface, startIndex: Long = -1, list: ArrayList<twitter4j.User> = ArrayList()) {
         apiInterface.onStart()
         var cursor: Long = startIndex
         try {
@@ -295,7 +189,7 @@ class TwitterAdapter {
                 else break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getFriendsList") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -316,7 +210,7 @@ class TwitterAdapter {
         }
     }
 
-    fun getFollowers(targetUserId: Long, apiInterface: FetchListInterface, startIndex: Long = -1, list: ArrayList<User> = ArrayList()) {
+    fun getFollowers(targetUserId: Long, apiInterface: FetchListInterface, startIndex: Long = -1, list: ArrayList<twitter4j.User> = ArrayList()) {
         apiInterface.onStart()
         var cursor: Long = startIndex
         try {
@@ -328,7 +222,7 @@ class TwitterAdapter {
                 else break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getFollowersList") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -349,20 +243,20 @@ class TwitterAdapter {
         }
     }
 
-    fun getTweets(apiInterface: FetchListInterface, startIndex: Int = 1, list: ArrayList<Status> = ArrayList()) {
+    fun getTweets(apiInterface: FetchListInterface, startIndex: Int = 1, list: ArrayList<twitter4j.Status> = ArrayList()) {
         apiInterface.onStart()
         var lastIndex = startIndex
         try {
             for (i in startIndex..Int.MAX_VALUE) {
                 apiInterface.onFetch(list.count())
-                val paging = Paging(i, 20)
+                val paging = twitter4j.Paging(i, 20)
                 val statuses = twitter.client.getUserTimeline(paging)
                 list.addAll(statuses)
                 lastIndex = i
                 if (statuses.size == 0) break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getUserTimeline") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -383,7 +277,7 @@ class TwitterAdapter {
         }
     }
 
-    fun destroyStatus(statuses: ArrayList<Status>, apiInterface: IterableInterface, startIndex: Int = 0) {
+    fun destroyStatus(statuses: ArrayList<twitter4j.Status>, apiInterface: IterableInterface, startIndex: Int = 0) {
         apiInterface.onStart()
         // TODO : 이미 트윗이 지워진 경우 등 예외상황에 잘 동작하는지 확인할 필요 있음
         var cursor = 0
@@ -396,7 +290,7 @@ class TwitterAdapter {
                 if(!BuildConfig.DEBUG) twitter.client.destroyStatus(status.id)
             }
             apiInterface.onFinished()
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "destroyStatus") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -429,7 +323,7 @@ class TwitterAdapter {
                 else break
             }
             apiInterface.onFinished(list)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "getBlocksIDs") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -460,7 +354,7 @@ class TwitterAdapter {
                 twitter.client.destroyBlock(list[i])
             }
             apiInterface.onFinished()
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "createBlock") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -486,7 +380,7 @@ class TwitterAdapter {
         try {
             val user = twitter.client.showUser(screenName)
             apiInterface.onFinished(user)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "lookup") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -516,7 +410,7 @@ class TwitterAdapter {
         try {
             val user = twitter.client.showStatus(id)
             apiInterface.onFinished(user)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "lookStatus") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()
@@ -546,7 +440,7 @@ class TwitterAdapter {
         try {
             val user = twitter.client.updateStatus(text)
             apiInterface.onFinished(user)
-        } catch (te: TwitterException) {
+        } catch (te: twitter4j.TwitterException) {
             object : TwitterExceptionHandler(te, "publish") {
                 override fun onUncaughtError() {
                     apiInterface.onUncaughtError()

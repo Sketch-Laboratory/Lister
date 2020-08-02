@@ -3,6 +3,7 @@ package com.sasarinomari.twitter.authenticate
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import com.sasarinomari.twitter.FetchObjectInterface
 import com.sasarinomari.twitter.R
 import com.sasarinomari.twitter.TwitterAPIActivity
 import com.sasarinomari.twitter.TwitterAdapter
@@ -28,7 +29,6 @@ class AuthenticationActivity : TwitterAPIActivity() {
         initializeWebView()
 
         // Generate authentication url
-        twitterAdapter.twitter.initialize()
         openAuthPage()
     }
 
@@ -103,15 +103,14 @@ class AuthenticationActivity : TwitterAPIActivity() {
     private fun apiTest(accessToken: AccessToken) {
         twitterAdapter.initialize(accessToken)
         Thread {
-            twitterAdapter.getMe(object : TwitterAdapter.FetchObjectInterface {
+            twitterAdapter.getMe(object : FetchObjectInterface {
                 override fun onStart() {}
 
                 override fun onFinished(obj: Any) {
-                    val user = obj as twitter4j.User
                     val authData = AuthData()
                     authData.token = accessToken
                     authData.lastLogin = Date()
-                    authData.user = User(user)
+                    authData.user = obj as User
 
                     val recorder = AuthData.Recorder(this@AuthenticationActivity)
                     if (!recorder.hasUser(authData)) {

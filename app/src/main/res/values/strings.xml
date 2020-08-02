@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE resources [
-    <!ENTITY appname "리스터">
-    ]>
+<?xml version="1.0" encoding="utf-8"?><!DOCTYPE resources [<!ENTITY appname "리스터">]>
 <resources>
     <string name="app_name">&appname;</string>
 </resources>

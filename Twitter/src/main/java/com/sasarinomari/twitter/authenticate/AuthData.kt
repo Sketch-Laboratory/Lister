@@ -22,7 +22,7 @@ class AuthData {
         return token?.token.hashCode()
     }
 
-    internal class Recorder(private val context: Context) {
+    class Recorder(private val context: Context) {
         private var prefId = "record"
         private var key = "auth"
 

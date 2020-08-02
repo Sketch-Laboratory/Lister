@@ -1,5 +1,6 @@
 package com.sasarinomari.twitterlistviewer
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -7,46 +8,39 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
+import com.sasarinomari.base.BaseActivity
 import com.sasarinomari.dialog.MaterialDialog
 import com.sasarinomari.dialog.MaterialDialogAdapter
 import com.sasarinomari.dialog.SweetDialogAdapter
+import com.sasarinomari.twitter.Twitter
 import com.sasarinomari.twitter.TwitterAdapter
 import com.sasarinomari.twitter.authenticate.TokenManagementActivity
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
+    enum class Requests {
+        Token, Dashboard
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setActionbarVisibility(false)
+        initialize()
+        startActivityForResult(Intent(this, TokenManagementActivity::class.java), Requests.Token.ordinal)
+    }
 
-        val list = ListView(this)
-        setContentView(list)
+    private fun initialize() {
+        Twitter.setOAuthConsumer(
+            getString(R.string.consumerKey), getString(R.string.consumerSecret))
+    }
 
-        val values = arrayOf(
-            "Open Twitter.TokenManagementActivity",
-            "Material Dialog Test",
-            "Sweet Alert Dialog Test"
-        )
-
-        list.adapter = ArrayAdapter(this,
-            android.R.layout.simple_list_item_1, android.R.id.text1, values
-        )
-        list.setOnItemClickListener { _, _, position, _ ->
-            when(position) {
-                0 -> {
-                    TwitterAdapter.TwitterInterface.setOAuthConsumer(
-                        getString(R.string.consumerKey), getString(R.string.consumerSecret))
-                    startActivity(Intent(this, TokenManagementActivity::class.java))
-                }
-                1 -> {
-                    MaterialDialogAdapter(this)
-                        .message("Hello, World!")
-                        .show()
-                }
-                2 -> {
-                    SweetDialogAdapter(this)
-                        .message("Hello, World!")
-                        .show()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode){
+            Requests.Token.ordinal ->{
+                if(resultCode == Activity.RESULT_OK) {
+                    startActivityForResult(Intent(this, DashboardActivity::class.java), Requests.Dashboard.ordinal)
                 }
             }
+            else -> super.onActivityResult(requestCode, resultCode, data)
         }
     }
 }
