@@ -25,6 +25,7 @@ android {
 }
 
 dependencies {
+    // region Android default dependencies
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.3.1'
@@ -32,5 +33,15 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    // endregion
+
+    // region UI dependencies
+    implementation 'com.squareup.picasso:picasso:2.71828' // 쓰기편한 동적 이미지뷰
+    // region Material dialogs
+    implementation 'com.afollestad.material-dialogs:core:3.1.1'
+    implementation 'com.afollestad.material-dialogs:input:3.1.1'
+    implementation 'com.afollestad.material-dialogs:bottomsheets:3.1.1'
+    // endregion
+    //endregion
 
 }

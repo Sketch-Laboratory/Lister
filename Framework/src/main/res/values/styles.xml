@@ -1,0 +1,15 @@
+<resources>
+    <style name="BaseText">
+        <item name="android:textColor">@color/_sasarino_framework_text</item>
+    </style>
+
+    <style name="LightText" parent="BaseText">
+        <item name="android:fontFamily">@font/noto_sans_light</item>
+    </style>
+    <style name="BoldText" parent="BaseText">
+        <item name="android:fontFamily">@font/noto_sans_bold</item>
+    </style>
+    <style name="RegularText" parent="BaseText">
+        <item name="android:fontFamily">@font/noto_sans_regular</item>
+    </style>
+</resources>

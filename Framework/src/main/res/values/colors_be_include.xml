@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 이하의 리소스는 본 라이브러리를 참조하는 모듈에서 정의되어야만 합니다. -->
+    <color name="_sasarino_framework_text">@color/textColor</color>
+</resources>
