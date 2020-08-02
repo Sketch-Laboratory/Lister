@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="title" format="reference|string" />
+    <attr name="description" format="reference|string" />
+    <attr name="icon" format="reference" />
+    <attr name="ovalColor" format="color" />
+
+    <declare-styleable name="OvalImageView">
+        <attr name="icon" />
+        <attr name="ovalColor" />
+    </declare-styleable>
+</resources>
